@@ -7,6 +7,16 @@
 #include "doctest.h"
 #include "quadratic.h"
 
+#include <iostream>
+
+// Approximate equality of floating point numbers, including comparing if both are nan or inf.
+template <typename T>
+bool isapprox(T x, T y) {
+    return  (std::isnan(x) && std::isnan(y)) ||
+            (std::isinf(x) && std::isinf(y) && sgn(x) == sgn(y)) ||
+            std::abs(x - y) <= std::sqrt(eps<T>) * std::max(abs(x), abs(y));
+}
+
 TEST_CASE("constants") {
 
     // constants
@@ -56,9 +66,8 @@ class quadratic_test : public quadratic<T> {
             CHECK(ret == retcode);
 
             if (ret != retcode || !isapprox(this->x1, expected_x1) || !isapprox(this->x2, expected_x2)) {
-                cout << "x1, x2 (expected): " << expected_x1 << ", " << expected_x2 << endl;
-                cout << "x1, x2 (solved): " << this->x1 << ", " << this->x2 << endl;
-                cout << endl;
+                std::cerr << "x1, x2 (expected): " << expected_x1 << ", " << expected_x2 << std::endl;
+                std::cerr << "x1, x2 (solved): " << this->x1 << ", " << this->x2 << std::endl << std::endl;
             }
 
             switch(retcode) {

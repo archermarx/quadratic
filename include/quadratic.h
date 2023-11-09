@@ -4,10 +4,9 @@
 #include <ostream>
 #include <iostream>
 
-using std::cout;
-using std::endl;
-
-// Constants
+//====================================================
+//  Floating point constants and utility functions
+//====================================================
 template <typename T>
 const T NaN = std::numeric_limits<T>::quiet_NaN();
 
@@ -16,20 +15,6 @@ const T inf = std::numeric_limits<T>::infinity();
 
 template <typename T>
 const T eps = std::numeric_limits<T>::epsilon();
-
-// Utility functions
-template <typename T> int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-}
-
-template <typename T>
-bool isapprox(T x, T y) {
-    return  (std::isnan(x) && std::isnan(y)) ||
-            (std::isinf(x) && std::isinf(y) && sgn(x) == sgn(y)) ||
-            std::abs(x - y) <= std::sqrt(eps<T>) * std::max(abs(x), abs(y));
-}
-
-// Floating point constants
 
 // Maximum exponent
 template <typename T>
@@ -51,28 +36,9 @@ const int ECP_MAX = E_MAX<T> - 2 - NUM_DIGITS<T> / 2;
 template<typename T>
 const int ECP_MIN = E_MIN<T> + 2 * NUM_DIGITS<T> - 4;
 
-
-enum quadratic_return_code: char{
-    QUAD_NOT_RUN,
-    QUAD_NO_SOLUTIONS,
-    QUAD_ONE_SOLUTION,
-    QUAD_TWO_SOLUTIONS
-};
-
-// Printing
-inline std::ostream& operator<<(std::ostream &out, const quadratic_return_code q) {
-    switch(q) {
-        case QUAD_NOT_RUN:
-            return out << "QUAD_NOT_RUN";
-        case QUAD_NO_SOLUTIONS:
-            return out << "QUAD_NO_SOLUTIONS";
-        case QUAD_ONE_SOLUTION:
-            return out << "QUAD_ONE_SOLUTION";
-        case QUAD_TWO_SOLUTIONS:
-            return out << "QUAD_TWO_SOLUTIONS";
-        default:
-            return out << "QUAD_INVALID_RETCODE";
-    }
+// Utility functions
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
 }
 
 // Return a pair (Kout, K2) of exponents such that neither is outside [E_MIN, E_MAX]
@@ -108,6 +74,33 @@ T kahan_discriminant_fma(T a, T b, T c) {
     auto dq = std::fma(4*a,c,-q);
     d = (p - q) + (dp - dq);
     return d;
+}
+
+//====================================================
+//              Return code handling
+//====================================================
+
+enum quadratic_return_code: char{
+    QUAD_NOT_RUN,
+    QUAD_NO_SOLUTIONS,
+    QUAD_ONE_SOLUTION,
+    QUAD_TWO_SOLUTIONS
+};
+
+// Printing
+inline std::ostream& operator<<(std::ostream &out, const quadratic_return_code q) {
+    switch(q) {
+        case QUAD_NOT_RUN:
+            return out << "QUAD_NOT_RUN";
+        case QUAD_NO_SOLUTIONS:
+            return out << "QUAD_NO_SOLUTIONS";
+        case QUAD_ONE_SOLUTION:
+            return out << "QUAD_ONE_SOLUTION";
+        case QUAD_TWO_SOLUTIONS:
+            return out << "QUAD_TWO_SOLUTIONS";
+        default:
+            return out << "QUAD_INVALID_RETCODE";
+    }
 }
 
 // Algorithm based on "The Ins and Outs of Solving Quadratic Equations with Floating-Point Arithmetic (Goualard 2023)"
