@@ -6,7 +6,7 @@
 
 #include "doctest.h"
 #include "quadratic.h"
-
+#include <chrono>
 #include <iostream>
 
 // Approximate equality of floating point numbers, including comparing if both are nan or inf.
@@ -235,4 +235,63 @@ TEST_CASE("two solutions") {
     for (auto &test : tests) {
         test.validate();
     }
+}
+
+template <typename T>
+std::tuple<T, T> quad_naive(T a, T b, T c) {
+    if (a == 0) {
+        if (b ==0) {
+            return std::make_tuple(NaN<T>, NaN<T>);
+        } else {
+            return std::make_tuple(-c / b, NaN<T>);
+        }
+    } else {
+        auto discrim = b*b - 4*a*c;
+        if (discrim < 0) {
+            return std::make_tuple(NaN<T>, NaN<T>);
+        } else if (discrim == 0) {
+            return std::make_tuple(-b / (2*a), NaN<T>);
+        } else {
+            auto sqrt_d = sqrt(discrim); 
+            auto x1 = (-b + sqrt_d) / (2*a);
+            auto x2 = (-b - sqrt_d) / (2*a);
+            return std::make_tuple(x1, x2);
+        }
+    }
+}
+
+template <typename T>
+void benchmark_quadratic(T a, T b, T c, int N) {
+
+    std::vector<std::tuple<T,T>> results(2 * N);
+
+    auto start = std::chrono::steady_clock::now();
+    
+    for (int i = 0; i < N; ++i) {
+        results[i] = quad_naive(a, b, c);
+    }
+
+    auto end = std::chrono::steady_clock::now();
+
+    auto naive_time = (end - start);
+
+    std::cout << "Naive implementation: " << std::chrono::duration <double, std::nano> (naive_time).count() / N<< " ns" << std::endl;
+
+    start = std::chrono::steady_clock::now();
+
+    for (int i = N; i < 2 * N; ++i) {
+        auto q = quadratic(a, b, c);
+        auto ret = q.solve();
+        results[i] = std::make_tuple(q.x1, q.x2);
+    }
+    
+    end = std::chrono::steady_clock::now();
+
+    auto robust_time = (end - start);
+
+    std::cout << "Robust implementation: " << std::chrono::duration <double, std::nano> (robust_time).count()  / N << " ns" << std::endl;
+}
+
+TEST_CASE("benchmark"){
+    benchmark_quadratic(1., -1., -1., 10000);
 }
