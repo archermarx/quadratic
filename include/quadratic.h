@@ -42,23 +42,12 @@ template <typename T> int sgn(T val) {
 }
 
 // Return a pair (Kout, K2) of exponents such that neither is outside [E_MIN, E_MAX]
-// with Kout = K2 = Kin
+// with Kout = K2 - Kin
 // float32:  E_MIN = -126,   E_MAX = 127
 // float64:  E_MIN = -1022,  E_MAX = 1023
 // float128: E_MIN = -16382, E_MAX = 16383
 template <typename T>
-std::tuple<int, int> keep_exponent_in_check(int Kin) {
-    int K2, Kout;
-    
-    if (Kin <= E_MAX<T> && Kin >= E_MIN<T>) {
-        Kout = Kin; K2 = 0;
-    } else if (Kin < E_MIN<T>) {
-        Kout = E_MIN<T>; K2 = Kin - E_MIN<T>;
-    } else {
-        Kout = E_MAX<T>; K2 = Kin - E_MAX<T>;
-    }
-    return std::make_tuple(Kout, K2);
-}
+inline int keep_exponent_in_check(int Kin) { return std::clamp(Kin, E_MIN<T>, E_MAX<T>); }
 
 // Accurate computation of the discriminant with Kahan's method, with an fma instruction
 template <typename T>
@@ -164,10 +153,9 @@ class quadratic  {
                             int E = ecp & 1;    // E = odd(ecp) ? 1 : 0
                             auto S = sqrt(-signif_c * exp2(E) / signif_a);
 
-                            std::tuple<int, int> Ms = keep_exponent_in_check<T>(M);
-                            int M1 = std::get<0>(Ms);
-                            int M2 = std::get<1>(Ms);
-                            T x = S * exp2(M1) * exp2(M2);
+                            auto M1 = keep_exponent_in_check<T>(M);
+                            auto M2 = M - M1;
+                            T x = S * exp2(M1) * exp2(M - M1);
                             x1 = -x;
                             x2 = x;
                             return QUAD_TWO_SOLUTIONS;
@@ -200,9 +188,8 @@ class quadratic  {
                             if (delta < 0) {
                                 return QUAD_NO_SOLUTIONS;
                             }
-                            auto Ks = keep_exponent_in_check<T>(K);
-                            auto K1 = std::get<0>(Ks);
-                            auto K2 = std::get<1>(Ks);
+                            auto K1 = keep_exponent_in_check<T>(K);
+                            auto K2 = K - K1;
                             if (delta > 0) {
                                 auto B = signif_b + sgn(b) * sqrt(delta);
                                 auto y1 = -(2 * c2) / B;
@@ -227,12 +214,11 @@ class quadratic  {
                         if (ecp < ECP_MIN<T>) {
                             auto y1 = -signif_b / signif_a;
                             auto y2 = c3 / (signif_a * y1);
-                            auto dMK = keep_exponent_in_check<T>(dM + K);
-                            auto Ks = keep_exponent_in_check<T>(K);
-                            int K1 = std::get<0>(Ks);
-                            int K2 = std::get<1>(Ks);
-                            int dMK1 = std::get<0>(dMK);
-                            int dMK2 = std::get<1>(dMK);
+                            auto dMK = dM + K;
+                            auto dMK1 = keep_exponent_in_check<T>(dMK);
+                            auto dMK2 = dMK - dMK1;
+                            auto K1 = keep_exponent_in_check<T>(K);
+                            auto K2 = K - K1;
 
                             auto _x1 = y1 * exp2(K1) * exp2(K2);
                             auto _x2 = y2 * exp2(dMK1) * exp2(dMK2);
@@ -245,9 +231,9 @@ class quadratic  {
                         if (sgn(a) == sgn(c)) {
                             return QUAD_NO_SOLUTIONS;
                         } else {
-                            auto MK = keep_exponent_in_check<T>(M + K);
-                            int MK1 = std::get<0>(MK);
-                            int MK2 = std::get<1>(MK);
+                            auto MK = M + K;
+                            auto MK1 = keep_exponent_in_check<T>(MK);
+                            auto MK2 = MK - MK1;
                             auto _x1 = S * exp2(MK1) * exp2(MK2);
                             auto _x2 = -_x1;
                             x1 = _x2;
