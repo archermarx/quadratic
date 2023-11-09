@@ -43,44 +43,18 @@ TEST_CASE("constants") {
 
 // Helper class for quadratic tests
 template<typename T>
-class quadratic_test : public quadratic<T> {
+class quadratic_test {
     public:
-        quadratic_return_code retcode;
-        T expected_x1;
-        T expected_x2;
+        T a, b, c, x1, x2;
 
-        quadratic_test(T _a, T _b, T _c, quadratic_return_code _retcode, T _x1, T _x2) {
-            this->a = _a; this->b = _b; this->c = _c; retcode = _retcode; expected_x1 = _x1; expected_x2 = _x2;
-        }
-
-        quadratic_test(T _a, T _b, T _c, quadratic_return_code _retcode, T _x1) {
-            this->a = _a; this->b = _b; this->c = _c; retcode = _retcode; expected_x1 = _x1; expected_x2 = NaN<T>;
-        }
-
-        quadratic_test(T _a, T _b, T _c, quadratic_return_code _retcode) {
-            this->a = _a; this->b = _b; this->c = _c; retcode = _retcode; expected_x1 = NaN<T>; expected_x2 = NaN<T>;
-        }
+        quadratic_test(T _a, T _b, T _c, T _x1, T _x2) : a(_a), b(_b), c(_c), x1(_x1), x2(_x2) {}
+        quadratic_test(T _a, T _b, T _c, T _x1) : a(_a), b(_b), c(_c), x1(_x1), x2(NaN<T>) {}
+        quadratic_test(T _a, T _b, T _c) : a(_a), b(_b), c(_c), x1(NaN<T>), x2(NaN<T>) {}
 
         void validate() {
-            auto ret = this->solve();
-            CHECK(ret == retcode);
-
-            if (ret != retcode || !isapprox(this->x1, expected_x1) || !isapprox(this->x2, expected_x2)) {
-                std::cerr << "x1, x2 (expected): " << expected_x1 << ", " << expected_x2 << std::endl;
-                std::cerr << "x1, x2 (solved): " << this->x1 << ", " << this->x2 << std::endl << std::endl;
-            }
-
-            switch(retcode) {
-                case QUAD_ONE_SOLUTION:
-                    CHECK(isapprox(this->x1, expected_x1));
-                    break;
-                case QUAD_TWO_SOLUTIONS:
-                    CHECK(isapprox(this->x1, expected_x1));
-                    CHECK(isapprox(this->x2, expected_x2));
-                    break;
-                default:
-                    break;
-            }
+            auto solution = solve_quadratic(a, b, c);
+            CHECK(isapprox(x1, solution.first));
+            CHECK(isapprox(x2, solution.second));
             return;
         }   
 };
@@ -129,7 +103,7 @@ quadratic_test<T> kahan_random_quadratic(int m) {
     T b = -2 * M * f1;
     T c = M * f2;
 
-    quadratic_test<T> test(a, b, c, QUAD_TWO_SOLUTIONS, x1, x2);
+    quadratic_test<T> test(a, b, c, x1, x2);
 
     return test;
 }
@@ -155,10 +129,10 @@ TEST_CASE("kahan randomized fibonacci quadratic stress test") {
 
 TEST_CASE("no real solutions") {
     std::vector<quadratic_test<double>> tests{
-        quadratic_test<double>(2.0, 0.0, 3.0, QUAD_NO_SOLUTIONS),
-        quadratic_test<double>(1.0, 1.0, 1.0, QUAD_NO_SOLUTIONS),
-        quadratic_test<double>(exp2(600.0), 0.0, exp2(600.0), QUAD_NO_SOLUTIONS),
-        quadratic_test<double>(-exp2(600.0), 0.0, -exp2(600.0), QUAD_NO_SOLUTIONS)
+        quadratic_test<double>(2.0, 0.0, 3.0),
+        quadratic_test<double>(1.0, 1.0, 1.0),
+        quadratic_test<double>(exp2(600.0), 0.0, exp2(600.0)),
+        quadratic_test<double>(-exp2(600.0), 0.0, -exp2(600.0))
     };
 
     for (auto &test: tests) {
@@ -170,28 +144,28 @@ TEST_CASE("degenerate inputs") {
     
     std::vector<quadratic_test<double>> tests {
         // a==0, b==0, c==0
-        quadratic_test<double>(0., 0., 0., QUAD_NO_SOLUTIONS),
+        quadratic_test<double>(0., 0., 0.),
         // a==0, b!=0, c==0
-        quadratic_test<double>(0., 1., 0., QUAD_ONE_SOLUTION, 0.0),
+        quadratic_test<double>(0., 1., 0., 0.),
         // a==0, b!=0, c!=0
-        quadratic_test<double>(0., 1., 2., QUAD_ONE_SOLUTION, -2.0),
-        quadratic_test<double>(0., 3., 4., QUAD_ONE_SOLUTION, -4./3.),
-        quadratic_test<double>(0., exp2(600), -exp2(600), QUAD_ONE_SOLUTION, 1.0),
-        quadratic_test<double>(0., exp2(600), exp2(600), QUAD_ONE_SOLUTION, -1.0),
-        quadratic_test<double>(0., exp2(-600), exp2(600), QUAD_ONE_SOLUTION, -inf<double>),
-        quadratic_test<double>(0., exp2(600), exp2(-600), QUAD_ONE_SOLUTION, 0.0),
-        quadratic_test<double>(0., 2., -1.0e-323, QUAD_ONE_SOLUTION, 5.0e-324),
+        quadratic_test<double>(0., 1., 2., -2.0),
+        quadratic_test<double>(0., 3., 4., -4./3.),
+        quadratic_test<double>(0., exp2(600), -exp2(600), 1.0),
+        quadratic_test<double>(0., exp2(600), exp2(600), -1.0),
+        quadratic_test<double>(0., exp2(-600), exp2(600), -inf<double>),
+        quadratic_test<double>(0., exp2(600), exp2(-600), 0.0),
+        quadratic_test<double>(0., 2., -1.0e-323, 5.0e-324),
         // a!=0, b==0, c==0
-        quadratic_test<double>(3., 0., 0., QUAD_ONE_SOLUTION, 0.0),
-        quadratic_test<double>(1200., 0., 0., QUAD_ONE_SOLUTION, 0.0),
+        quadratic_test<double>(3., 0., 0., 0.0),
+        quadratic_test<double>(1200., 0., 0., 0.0),
         // a!=0, b==0, c!=0
-        quadratic_test<double>(2., 0.,-3., QUAD_TWO_SOLUTIONS, -sqrt(3./2.), sqrt(3./2.)),
-        quadratic_test<double>(exp2(600), 0., -exp2(600), QUAD_TWO_SOLUTIONS, -1.0, 1.0),
+        quadratic_test<double>(2., 0.,-3., -sqrt(3./2.), sqrt(3./2.)),
+        quadratic_test<double>(exp2(600), 0., -exp2(600), -1.0, 1.0),
         // a!=0, b!=0, c==0
-        quadratic_test<double>(3., 2., 0., QUAD_TWO_SOLUTIONS, -2.0/3.0, 0.0),
-        quadratic_test<double>(exp2(600), exp2(700), 0., QUAD_TWO_SOLUTIONS, -exp2(100), 0.0),
-        quadratic_test<double>(exp2(-600), exp2(700), 0.0, QUAD_TWO_SOLUTIONS, -inf<double>, 0.0),
-        quadratic_test<double>(exp2(600), exp2(-700), 0.0, QUAD_TWO_SOLUTIONS, -0.0, 0.0)
+        quadratic_test<double>(3., 2., 0., -2.0/3.0, 0.0),
+        quadratic_test<double>(exp2(600), exp2(700), 0., -exp2(100), 0.0),
+        quadratic_test<double>(exp2(-600), exp2(700), 0.0, -inf<double>, 0.0),
+        quadratic_test<double>(exp2(600), exp2(-700), 0.0, -0.0, 0.0)
     };
 
     for (auto &test : tests) {
@@ -201,7 +175,7 @@ TEST_CASE("degenerate inputs") {
 
 TEST_CASE("one solution") {
     std::vector<quadratic_test<double>> tests{
-        quadratic_test<double>(exp2(1023), 2.0, exp2(-1023), QUAD_ONE_SOLUTION, -exp2(-1023))
+        quadratic_test<double>(exp2(1023), 2.0, exp2(-1023), -exp2(-1023))
     };
 
     for (auto &test : tests) {
@@ -210,26 +184,25 @@ TEST_CASE("one solution") {
 }
 
 TEST_CASE("two solutions") {
-    auto ret = QUAD_TWO_SOLUTIONS;
     std::vector<quadratic_test<double>> tests{
-        quadratic_test<double>(1., -1., -1., ret, -0.6180339887498948, 1.618033988749895),
-        quadratic_test<double>(1., 1 + exp2(-52), 0.25 + exp2(-53), ret, (-1-exp2(-51))/2, -0.5),
-        quadratic_test<double>(1., exp2(-511) + exp2(-563), exp2(-1024), ret, -7.458340888372987e-155,-7.458340574027429e-155),
-        quadratic_test<double>(1., exp2(27), 0.75, ret, -134217728.0, -5.587935447692871e-09),
-        quadratic_test<double>(1., -1e9, 1., ret, 1e-9, 1000000000.0),
-        quadratic_test<double>(1.3407807929942596e154, -1.3407807929942596e154, -1.3407807929942596e154, ret, -0.6180339887498948, 1.618033988749895),
-        quadratic_test<double>(exp2(600), 0.5, -exp2(-600), ret, -3.086568504549085e-181,1.8816085719976428e-181),
-        quadratic_test<double>(exp2(600), 0.5, -exp2(600), ret, -1.0, 1.0),
-        quadratic_test<double>(8.0, exp2(800), -exp2(500), ret, -8.335018041099818e+239, 4.909093465297727e-91),
-        quadratic_test<double>(1.0, exp2(26), -0.125, ret, -67108864.0, 1.862645149230957e-09),
-        quadratic_test<double>(exp2(-1073), -exp2(-1073), -exp2(-1073), ret, -0.6180339887498948, 1.618033988749895),
-        quadratic_test<double>(exp2(600), -exp(-600), -exp2(-600), ret, -2.409919865102884e-181, 2.409919865102884e-181),    
-        quadratic_test<double>(-158114166017., 316227766017., -158113600000., ret, 0.99999642020057874,1.0),
-        quadratic_test<double>(-312499999999.0,707106781186.0,-400000000000.0, ret, 1.131369396027,1.131372303775),
-        quadratic_test<double>(-67., 134., -65., ret, 0.82722631488372798,1.17277368511627202),
-        quadratic_test<double>(0.247260273973, 0.994520547945, -0.138627953316, ret, -4.157030027041105,0.1348693622211607),
-        quadratic_test<double>(1., -2300000., 2e11, ret,90518.994979145,2209481.005020854),
-        quadratic_test<double>(1.5*exp2(-1026), 0., -exp2(1022), ret, -1.4678102981723264e308, 1.4678102981723264e308)
+        quadratic_test<double>(1., -1., -1., -0.6180339887498948, 1.618033988749895),
+        quadratic_test<double>(1., 1 + exp2(-52), 0.25 + exp2(-53), (-1-exp2(-51))/2, -0.5),
+        quadratic_test<double>(1., exp2(-511) + exp2(-563), exp2(-1024), -7.458340888372987e-155,-7.458340574027429e-155),
+        quadratic_test<double>(1., exp2(27), 0.75, -134217728.0, -5.587935447692871e-09),
+        quadratic_test<double>(1., -1e9, 1., 1e-9, 1000000000.0),
+        quadratic_test<double>(1.3407807929942596e154, -1.3407807929942596e154, -1.3407807929942596e154, -0.6180339887498948, 1.618033988749895),
+        quadratic_test<double>(exp2(600), 0.5, -exp2(-600), -3.086568504549085e-181,1.8816085719976428e-181),
+        quadratic_test<double>(exp2(600), 0.5, -exp2(600), -1.0, 1.0),
+        quadratic_test<double>(8.0, exp2(800), -exp2(500), -8.335018041099818e+239, 4.909093465297727e-91),
+        quadratic_test<double>(1.0, exp2(26), -0.125, -67108864.0, 1.862645149230957e-09),
+        quadratic_test<double>(exp2(-1073), -exp2(-1073), -exp2(-1073), -0.6180339887498948, 1.618033988749895),
+        quadratic_test<double>(exp2(600), -exp(-600), -exp2(-600), -2.409919865102884e-181, 2.409919865102884e-181),    
+        quadratic_test<double>(-158114166017., 316227766017., -158113600000., 0.99999642020057874,1.0),
+        quadratic_test<double>(-312499999999.0,707106781186.0,-400000000000.0, 1.131369396027,1.131372303775),
+        quadratic_test<double>(-67., 134., -65., 0.82722631488372798,1.17277368511627202),
+        quadratic_test<double>(0.247260273973, 0.994520547945, -0.138627953316, -4.157030027041105,0.1348693622211607),
+        quadratic_test<double>(1., -2300000., 2e11,90518.994979145,2209481.005020854),
+        quadratic_test<double>(1.5*exp2(-1026), 0., -exp2(1022), -1.4678102981723264e308, 1.4678102981723264e308)
     };
 
     for (auto &test : tests) {
@@ -238,32 +211,32 @@ TEST_CASE("two solutions") {
 }
 
 template <typename T>
-std::tuple<T, T> quad_naive(T a, T b, T c) {
+std::pair<T, T> quad_naive(T a, T b, T c) {
     if (a == 0) {
         if (b ==0) {
-            return std::make_tuple(NaN<T>, NaN<T>);
+            return std::make_pair(NaN<T>, NaN<T>);
         } else {
-            return std::make_tuple(-c / b, NaN<T>);
+            return std::make_pair(-c / b, NaN<T>);
         }
     } else {
         auto discrim = b*b - 4*a*c;
         if (discrim < 0) {
-            return std::make_tuple(NaN<T>, NaN<T>);
+            return std::make_pair(NaN<T>, NaN<T>);
         } else if (discrim == 0) {
-            return std::make_tuple(-b / (2*a), NaN<T>);
+            return std::make_pair(-b / (2*a), NaN<T>);
         } else {
             auto sqrt_d = sqrt(discrim); 
             auto x1 = (-b + sqrt_d) / (2*a);
             auto x2 = (-b - sqrt_d) / (2*a);
-            return std::make_tuple(x1, x2);
+            return std::make_pair(x1, x2);
         }
     }
 }
 
 template <typename T>
-void benchmark_quadratic(T a, T b, T c, int N) {
+std::vector<std::pair<T, T>> benchmark_quadratic(T a, T b, T c, int N) {
 
-    std::vector<std::tuple<T,T>> results(2 * N);
+    std::vector<std::pair<T,T>> results(2 * N);
 
     auto start = std::chrono::steady_clock::now();
     
@@ -280,9 +253,7 @@ void benchmark_quadratic(T a, T b, T c, int N) {
     start = std::chrono::steady_clock::now();
 
     for (int i = N; i < 2 * N; ++i) {
-        auto q = quadratic(a, b, c);
-        auto ret = q.solve();
-        results[i] = std::make_tuple(q.x1, q.x2);
+        results[i] = solve_quadratic(a, b, c);
     }
     
     end = std::chrono::steady_clock::now();
@@ -290,8 +261,13 @@ void benchmark_quadratic(T a, T b, T c, int N) {
     auto robust_time = (end - start);
 
     std::cout << "Robust implementation: " << std::chrono::duration <double, std::nano> (robust_time).count()  / N << " ns" << std::endl;
+
+    return results;
 }
 
 TEST_CASE("benchmark"){
-    benchmark_quadratic(1., -1., -1., 10000);
+    auto N = 10000;
+    auto results = benchmark_quadratic(1., -1., -1., N);
+    std::cout << results[0].first << ", " << results[0].second << std::endl;
+    std::cout << results[N].first << ", " << results[N].second << std::endl;
 }
