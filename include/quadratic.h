@@ -51,18 +51,11 @@ inline int keep_exponent_in_check(int Kin) { return std::clamp(Kin, E_MIN<T>, E_
 
 // Accurate computation of the discriminant with Kahan's method, with an fma instruction
 template <typename T>
-T kahan_discriminant_fma(T a, T b, T c) {
-    auto p = b*b;
-    auto q = 4*a*c;
-    auto d = p - q;
-    if (3 * std::abs(d) >= p + 4*q) {
-        // If b^2 and 4ac are different enough
-        return d;
-    }
-    auto dp = std::fma(b,b,-p);
-    auto dq = std::fma(4*a,c,-q);
-    d = (p - q) + (dp - dq);
-    return d;
+inline T kahan_discriminant_fma(T a, T b, T c) {
+    T q = 4*a*c;
+    T dq = std::fma(-c, 4*a, q);
+    T dp = std::fma(b, b, -q);
+    return dq + dp;
 }
 
 // Algorithm based on "The Ins and Outs of Solving Quadratic Equations with Floating-Point Arithmetic (Goualard 2023)"
@@ -88,7 +81,7 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
             if (c == 0) {
                 // If a and c are zero, but b is nonzero, then we have bx = 0, so only
                 // one real solution (i.e. x = 0) exists
-                return std::make_pair(T(0.), NaN<T>);
+                return std::make_pair(T(0), NaN<T>);
             } else {
                 // If a == 0 but b and c are nonzero, then we have bx + c = 0, which is
                 // a linear equation with solution x = -c / b
@@ -121,9 +114,7 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
                     auto M1 = keep_exponent_in_check<T>(M);
                     auto M2 = M - M1;
                     auto x = S * exp2(M1) * exp2(M2);
-                    auto x1 = -x;
-                    auto x2 = x;
-                    return std::make_pair(x1, x2);
+                    return std::make_pair(-x, x);
                 }   
             }
         } else {
@@ -157,7 +148,7 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
                     auto K1 = keep_exponent_in_check<T>(K);
                     auto K2 = K - K1;
                     if (delta > 0) {
-                        auto B = signif_b + sgn(b) * sqrt(delta);
+                        auto B = std::fma(sqrt(delta), sgn(b), signif_b); //signif_b + sgn(b) * sqrt(delta);
                         auto y1 = -(2 * c2) / B;
                         auto y2 = -B / (2 * signif_a);
                         auto _x1 = y1 * exp2(K1) * exp2(K2);

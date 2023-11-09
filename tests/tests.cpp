@@ -47,6 +47,7 @@ class quadratic_test {
     public:
         T a, b, c, x1, x2;
 
+        quadratic_test() {}
         quadratic_test(T _a, T _b, T _c, T _x1, T _x2) : a(_a), b(_b), c(_c), x1(_x1), x2(_x2) {}
         quadratic_test(T _a, T _b, T _c, T _x1) : a(_a), b(_b), c(_c), x1(_x1), x2(NaN<T>) {}
         quadratic_test(T _a, T _b, T _c) : a(_a), b(_b), c(_c), x1(NaN<T>), x2(NaN<T>) {}
@@ -235,13 +236,20 @@ std::pair<T, T> quad_naive(T a, T b, T c) {
 
 template <typename T>
 std::vector<std::pair<T, T>> benchmark_quadratic(T a, T b, T c, int N) {
+    int max_m = 10;
 
     std::vector<std::pair<T,T>> results(2 * N);
+    std::vector<quadratic_test<T>> tests(N);
+
+    for (int i = 0; i < N; ++i) {
+        tests[i] = kahan_random_quadratic<T>(i % max_m + 1);
+    }
 
     auto start = std::chrono::steady_clock::now();
     
     for (int i = 0; i < N; ++i) {
-        results[i] = quad_naive(a, b, c);
+        auto test = tests[i];
+        results[i] = quad_naive(test.a, test.b, test.c);
     }
 
     auto end = std::chrono::steady_clock::now();
@@ -253,7 +261,8 @@ std::vector<std::pair<T, T>> benchmark_quadratic(T a, T b, T c, int N) {
     start = std::chrono::steady_clock::now();
 
     for (int i = N; i < 2 * N; ++i) {
-        results[i] = solve_quadratic(a, b, c);
+        auto test = tests[i - N];
+        results[i] = solve_quadratic(test.a, test.b, test.c);
     }
     
     end = std::chrono::steady_clock::now();
@@ -266,7 +275,7 @@ std::vector<std::pair<T, T>> benchmark_quadratic(T a, T b, T c, int N) {
 }
 
 TEST_CASE("benchmark"){
-    auto N = 10000;
+    auto N = 1'000'000;
     auto results = benchmark_quadratic(1., -1., -1., N);
     std::cout << results[0].first << ", " << results[0].second << std::endl;
     std::cout << results[N].first << ", " << results[N].second << std::endl;
