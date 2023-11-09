@@ -1,4 +1,4 @@
-project('c++ tutorial', 'cpp')
+project('quadratic', 'cpp', version: 'v0.1.0', default_options: ['cpp_std=c++20'])
 
 inc = include_directories('include')
 
