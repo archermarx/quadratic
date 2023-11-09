@@ -1,0 +1,1 @@
+test_sources = files('tests.cpp')
