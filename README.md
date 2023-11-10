@@ -4,7 +4,7 @@
 
 Robust C++ quadratic equation solver. Solves quadratics equations without undue overflow, underflow, or catastrophic floating point cancellation.
 
-Vased on [*The Ins and Outs of Solving Quadratic Equations with Floating-Point Arithmetic* (2023)](https://www.authorea.com/users/627556/articles/648473-the-ins-and-outs-of-solving-quadratic-equations-with-floating-point-arithmetic) by Frédéric Goualard.
+Based on [*The Ins and Outs of Solving Quadratic Equations with Floating-Point Arithmetic* (2023)](https://www.authorea.com/users/627556/articles/648473-the-ins-and-outs-of-solving-quadratic-equations-with-floating-point-arithmetic) by Frédéric Goualard.
 
 Original Julia implementation at https://github.com/goualard-f/QuadraticEquation.jl.
 
