@@ -113,11 +113,11 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
                     int dM = ecp & ~1;  // dM = floor(ecp/2) * 2
                     int M = dM >> 1;    // M = dM / 2
                     int E = ecp & 1;    // E = odd(ecp) ? 1 : 0
-                    auto S = sqrt(-signif_c * exp2(E) / signif_a);
+                    auto S = sqrt(-ldexp(signif_c, E) / signif_a);
 
                     auto M1 = keep_exponent_in_check<T>(M);
                     auto M2 = M - M1;
-                    auto x = S * exp2(M1) * exp2(M2);
+                    auto x = ldexp(ldexp(S, M1), M2);
                     return std::pair(-x, x);
                 }   
             }
@@ -137,7 +137,7 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
                 auto ecp = exp_c + exp_a - 2 * exp_b;
 
                 if (ecp >= ECP_MIN<T> && ecp < ECP_MAX<T>) {
-                    auto c2 = signif_c * exp2(ecp);
+                    auto c2 = ldexp(signif_c, ecp);
                     auto delta = kahan_discriminant_fma(signif_a, signif_b, c2);
                     if (delta < 0) {
                         return NO_SOLUTIONS;
