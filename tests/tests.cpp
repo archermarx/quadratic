@@ -215,21 +215,21 @@ template <typename T>
 std::pair<T, T> quad_naive(T a, T b, T c) {
     if (a == 0) {
         if (b ==0) {
-            return std::make_pair(NaN<T>, NaN<T>);
+            return std::pair(NaN<T>, NaN<T>);
         } else {
-            return std::make_pair(-c / b, NaN<T>);
+            return std::pair(-c / b, NaN<T>);
         }
     } else {
         auto discrim = b*b - 4*a*c;
         if (discrim < 0) {
-            return std::make_pair(NaN<T>, NaN<T>);
+            return std::pair(NaN<T>, NaN<T>);
         } else if (discrim == 0) {
-            return std::make_pair(-b / (2*a), NaN<T>);
+            return std::pair(-b / (2*a), NaN<T>);
         } else {
             auto sqrt_d = sqrt(discrim); 
             auto x1 = (-b + sqrt_d) / (2*a);
             auto x2 = (-b - sqrt_d) / (2*a);
-            return std::make_pair(x1, x2);
+            return std::pair(x1, x2);
         }
     }
 }
@@ -256,7 +256,8 @@ std::vector<std::pair<T, T>> benchmark_quadratic(T a, T b, T c, int N) {
 
     auto naive_time = (end - start);
 
-    std::cout << "Naive implementation: " << std::chrono::duration <double, std::nano> (naive_time).count() / N<< " ns" << std::endl;
+    auto naive_duration = std::chrono::duration <double, std::nano> (naive_time).count() / N;
+    std::cout << "Naive implementation: " << naive_duration << " ns" << std::endl;
 
     start = std::chrono::steady_clock::now();
 
@@ -269,7 +270,10 @@ std::vector<std::pair<T, T>> benchmark_quadratic(T a, T b, T c, int N) {
 
     auto robust_time = (end - start);
 
-    std::cout << "Robust implementation: " << std::chrono::duration <double, std::nano> (robust_time).count()  / N << " ns" << std::endl;
+    auto robust_duration = std::chrono::duration <double, std::nano> (robust_time).count() / N;
+    std::cout << "Robust implementation: " << robust_duration << " ns" << std::endl;
+
+    std:: cout << "Robust / Naive: " << robust_duration / naive_duration << std::endl;
 
     return results;
 }

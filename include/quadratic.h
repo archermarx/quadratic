@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <iostream>
+#include <algorithm>
 
 //====================================================
 //  Floating point constants and utility functions
@@ -37,9 +38,13 @@ template<typename T>
 const int ECP_MIN = E_MIN<T> + 2 * NUM_DIGITS<T> - 4;
 
 // Utility functions
-template <typename T> int sgn(T val) {
+template <typename T>
+inline int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
+
+template <typename T>
+inline bool samesign(T a, T b) { return a * b > 0; }
 
 // Return a pair (Kout, K2) of exponents such that neither is outside [E_MIN, E_MAX]
 // with Kout = K2 - Kin
@@ -62,15 +67,14 @@ inline T kahan_discriminant_fma(T a, T b, T c) {
 template <typename T>
 std::pair<T, T> solve_quadratic(T a, T b, T c) {
 
-    const std::pair<T,T> NO_SOLUTIONS = std::make_pair(NaN<T>, NaN<T>);
+    const std::pair<T,T> NO_SOLUTIONS = std::pair(NaN<T>, NaN<T>);
 
-    // Degenerate case 1: any of the parameters are nan or inf
-    if (std::isnan(a) || std::isnan(b) || std::isnan(c) || 
-        std::isinf(a) || std::isinf(b) || std::isinf(c)) {
+    // Invalid case: any of the parameters are nan or inf
+    if (!std::isfinite(a) || !std::isfinite(b) || !std::isfinite(c)) {
         return NO_SOLUTIONS;
     }
 
-    // More degenerate cases
+    // Degenerate cases (one of the coefficients is zero)
     if (a == 0) {
         if (b == 0) {
             // if a and b are zero, then the quadratic is invalid
@@ -81,22 +85,22 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
             if (c == 0) {
                 // If a and c are zero, but b is nonzero, then we have bx = 0, so only
                 // one real solution (i.e. x = 0) exists
-                return std::make_pair(T(0), NaN<T>);
+                return std::pair(T(0), NaN<T>);
             } else {
                 // If a == 0 but b and c are nonzero, then we have bx + c = 0, which is
                 // a linear equation with solution x = -c / b
-                return std::make_pair(-c / b, NaN<T>);
+                return std::pair(-c / b, NaN<T>);
             }
         }
     } else {
         if (b == 0) {
             if (c == 0) {
                 // If a /= 0, but b and c == 0, then we have ax^2 = 0, implying x = 0;
-                return std::make_pair(T(0), NaN<T>);
+                return std::pair(T(0), NaN<T>);
             } else {
                 // If a and c /= 0, but b == 0. then we have x^2 = -c/a, which has either no
                 // real solutions if sign(a) = sign(c), or two real solutions otherwise
-                if (sgn(a) == sgn(c)) {
+                if (samesign(a, c)) {
                     return NO_SOLUTIONS;
                 } else {
                     // Split a and c into significant and exponent parts
@@ -114,19 +118,12 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
                     auto M1 = keep_exponent_in_check<T>(M);
                     auto M2 = M - M1;
                     auto x = S * exp2(M1) * exp2(M2);
-                    return std::make_pair(-x, x);
+                    return std::pair(-x, x);
                 }   
             }
         } else {
             if (c == 0) {
-                T x1, x2;
-                // a /= 0, b /= 0, c /= 0
-                if (sgn(a) == sgn(b)) {
-                    x1 = -b / a; x2 = 0.0;
-                } else {
-                    x1 = 0.0; x2 = -b / a;
-                }
-                return std::make_pair(x1, x2);
+                return std::minmax(T(0), -b / a);
             } else {
                 // a, b, and c all nonzero
 
@@ -147,25 +144,25 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
                     }
                     auto K1 = keep_exponent_in_check<T>(K);
                     auto K2 = K - K1;
+                    auto expval = ldexp(ldexp(1.0, K1), K2);
+
                     if (delta > 0) {
                         auto B = std::fma(sqrt(delta), sgn(b), signif_b); //signif_b + sgn(b) * sqrt(delta);
                         auto y1 = -(2 * c2) / B;
                         auto y2 = -B / (2 * signif_a);
-                        auto _x1 = y1 * exp2(K1) * exp2(K2);
-                        auto _x2 = y2 * exp2(K1) * exp2(K2);
-                        auto x1 = std::min(_x1, _x2);
-                        auto x2 = std::max(_x1, _x2);
-                        return std::make_pair(x1, x2);
+                        auto x1 = y1 * expval;
+                        auto x2 = y2 * expval;
+                        return std::minmax(x1, x2);
                     }
                     // delta == 0
-                    auto x1 = -(signif_b / (2 * signif_a)) * exp2(K1) * exp2(K2);
-                    return std::make_pair(x1, NaN<T>);
+                    auto x1 = -(signif_b / (2 * signif_a)) * expval;
+                    return std::pair(x1, NaN<T>);
                 }
 
-                int dM = ecp & ~1;  // dM = floor(ecp/2) * 2
-                int M = dM >> 1;    // M = dM / 2
-                int E = ecp & 1;    // E = odd(ecp) ? 1 : 0
-                auto c3 = signif_c * exp2(E);
+                int dM = ecp & ~1;              // dM = floor(ecp/2) * 2
+                int M = dM >> 1;                // M = dM / 2
+                int E = ecp & 1;                // E = odd(ecp) ? 1 : 0
+                auto c3 = ldexp(signif_c, E);   // c3 = signif_c * 2^E
                 auto S = sqrt(abs(c3 / signif_a));
 
                 if (ecp < ECP_MIN<T>) {
@@ -177,23 +174,20 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
                     auto K1 = keep_exponent_in_check<T>(K);
                     auto K2 = K - K1;
 
-                    auto _x1 = y1 * exp2(K1) * exp2(K2);
-                    auto _x2 = y2 * exp2(dMK1) * exp2(dMK2);
-                    auto x1 = std::min(_x1, _x2);
-                    auto x2 = std::max(_x1, _x2);
-                    return std::make_pair(x1, x2);
+                    auto x1 = ldexp(ldexp(y1,   K1),   K2); // x1 = y1 * 2^K1 * 2^K2
+                    auto x2 = ldexp(ldexp(y2, dMK1), dMK2); // x2 = y2 * 2^dMK1 * 2^dMK2
+                    return std::minmax(x1, x2);
                 }
 
                 // ecp >= ECP_MAX<T>
-                if (sgn(a) == sgn(c)) {
+                if (samesign(a, c)) {
                     return NO_SOLUTIONS;
                 } else {
                     auto MK = M + K;
                     auto MK1 = keep_exponent_in_check<T>(MK);
                     auto MK2 = MK - MK1;
-                    auto x2 = S * exp2(MK1) * exp2(MK2);
-                    auto x1 = -x2;
-                    return std::make_pair(x1, x2);
+                    auto x1 = ldexp(ldexp(S, MK1), MK2);
+                    return std::pair(-x1, x1);
                 }
             }                    
         }
