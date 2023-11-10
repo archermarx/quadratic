@@ -15,7 +15,7 @@ project_test_files = [
 ]
 
 build_args = [
-  '-Wconversion', '-Wsign-conversion'
+  '-Wconversion', '-Wsign-conversion' , '-Wall', '-O2'
 ]
 
 
@@ -31,7 +31,7 @@ project_target = shared_library(
   meson.project_name(),
   [],
   install : true,
-  c_args : build_args,
+  cpp_args : build_args,
   gnu_symbol_visibility : 'hidden',
   include_directories : public_headers,
 )
