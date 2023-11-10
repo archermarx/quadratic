@@ -113,19 +113,19 @@ std::pair<T, T> solve(T a, T b, T c) {
                 } else {
                     // Split a and c into significant and exponent parts
                     int exp_a, exp_c;
-                    auto signif_a = frexp(a, &exp_a);
-                    auto signif_c = frexp(c, &exp_c);
+                    T signif_a = frexp(a, &exp_a);
+                    T signif_c = frexp(c, &exp_c);
 
                     int ecp = exp_c - exp_a;
 
                     int dM = ecp & ~1;  // dM = floor(ecp/2) * 2
                     int M = dM >> 1;    // M = dM / 2
                     int E = ecp & 1;    // E = odd(ecp) ? 1 : 0
-                    auto S = sqrt(-ldexp(signif_c, E) / signif_a);
+                    T S = sqrt(-ldexp(signif_c, E) / signif_a);
 
-                    auto M1 = keep_exponent_in_check<T>(M);
-                    auto M2 = M - M1;
-                    auto x = ldexp(ldexp(S, M1), M2);
+                    int M1 = keep_exponent_in_check<T>(M);
+                    int M2 = M - M1;
+                    T x = ldexp(ldexp(S, M1), M2);
                     return std::pair(-x, x);
                 }   
             }
@@ -137,42 +137,42 @@ std::pair<T, T> solve(T a, T b, T c) {
 
                 // Split a, b, and c into significand and exponent
                 int exp_a, exp_b, exp_c;
-                auto signif_a = frexp(a, &exp_a);
-                auto signif_b = frexp(b, &exp_b);
-                auto signif_c = frexp(c, &exp_c);
+                T signif_a = frexp(a, &exp_a);
+                T signif_b = frexp(b, &exp_b);
+                T signif_c = frexp(c, &exp_c);
                 
                 int K = exp_b - exp_a;
                 // ecp = exp_c + exp_a - 2 exp_b
                 int ecp = exp_c + exp_a - (exp_b << 1);
 
                 if (ecp >= ECP_MIN<T> && ecp < ECP_MAX<T>) {
-                    auto c2 = ldexp(signif_c, ecp);
-                    auto delta = kahan_discriminant_fma(signif_a, signif_b, c2);
+                    T c2 = ldexp(signif_c, ecp);
+                    T delta = kahan_discriminant_fma(signif_a, signif_b, c2);
                     if (delta < 0) {
                         return NO_SOLUTIONS;
                     }
                     int K1 = keep_exponent_in_check<T>(K);
                     int K2 = K - K1;
-                    auto expval = ldexp(ldexp(one, K1), K2);
+                    T expval = ldexp(ldexp(one, K1), K2);
 
                     if (delta > 0) {
-                        auto B = std::fma(sqrt(delta), sgn(b), signif_b); //signif_b + sgn(b) * sqrt(delta);
-                        auto y1 = -(2 * c2) / B;
-                        auto y2 = -B / (2 * signif_a);
-                        auto x1 = y1 * expval;
-                        auto x2 = y2 * expval;
+                        T B = std::fma(sqrt(delta), sgn(b), signif_b); //signif_b + sgn(b) * sqrt(delta);
+                        T y1 = -(2 * c2) / B;
+                        T y2 = -B / (2 * signif_a);
+                        T x1 = y1 * expval;
+                        T x2 = y2 * expval;
                         return std::minmax(x1, x2);
                     }
                     // delta == 0
-                    auto x1 = -(signif_b / (2 * signif_a)) * expval;
+                    T x1 = -(signif_b / (2 * signif_a)) * expval;
                     return std::pair(x1, NaN<T>);
                 }
 
                 int dM = ecp & ~1;              // dM = floor(ecp/2) * 2
                 int M = dM >> 1;                // M = dM / 2
                 int E = ecp & 1;                // E = odd(ecp) ? 1 : 0
-                auto c3 = ldexp(signif_c, E);   // c3 = signif_c * 2^E
-                auto S = sqrt(abs(c3 / signif_a));
+                T c3 = ldexp(signif_c, E);   // c3 = signif_c * 2^E
+                T S = sqrt(abs(c3 / signif_a));
 
                 if (ecp < ECP_MIN<T>) {
                     auto y1 = -signif_b / signif_a;
