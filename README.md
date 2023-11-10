@@ -23,5 +23,9 @@ If there are no real solutions, then the pair will contain two NaNs. If there is
   double c = 1.0;
   auto [x1, x2] = quadratic::solve(a, b, c);
 ```
-
+Robust C++ quadratic equation solver. 
 When the equation has two solutions, the first solution will be the smaller of the two, i.e. `x1 < x2`.
+
+## Performance
+
+In my tests, this is typically about 2-3 times slower than a naive quadratic solver. I think more optimizations are certainly possible, however.
