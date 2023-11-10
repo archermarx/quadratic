@@ -14,7 +14,7 @@ Download the [header file](https://github.com/archermarx/quadratic/include/heade
 
 ## Usage
 
-To solve a quadratic equation with parameters `a`, `b`, and `c`, call the `solve_quadratic` function. This function returns a ```std::pair<T, T>```, where `T` is the input type.
+To solve a quadratic equation with parameters `a`, `b`, and `c`, call the `solve` function in the `quadratic` namespace. This function returns a ```std::pair<T, T>```, where `T` is the input type.
 If there are no real solutions, then the pair will contain two NaNs. If there is only one solution, then it will be contained in the first element, while the second element of the pair will be NaN. 
 
 ```cpp
