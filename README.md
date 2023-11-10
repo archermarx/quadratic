@@ -28,4 +28,4 @@ When the equation has two solutions, the first solution will be the smaller of t
 
 ## Performance
 
-In my tests, this is typically about 2-3 times slower than a naive quadratic solver. I think more optimizations are certainly possible, however.
+In my tests, this is typically about 2-3 times slower than a naive quadratic solver. I think more optimizations are certainly possible, and I welcome performance enhancement suggestions or PRs.
