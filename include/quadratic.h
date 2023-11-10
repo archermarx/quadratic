@@ -175,16 +175,16 @@ std::pair<T, T> solve(T a, T b, T c) {
                 T S = sqrt(abs(c3 / signif_a));
 
                 if (ecp < ECP_MIN<T>) {
-                    auto y1 = -signif_b / signif_a;
-                    auto y2 = c3 / (signif_a * y1);
+                    T y1 = -signif_b / signif_a;
+                    T y2 = c3 / (signif_a * y1);
                     int dMK = dM + K;
                     int dMK1 = keep_exponent_in_check<T>(dMK);
                     int dMK2 = dMK - dMK1;
                     int K1 = keep_exponent_in_check<T>(K);
                     int K2 = K - K1;
 
-                    auto x1 = ldexp(ldexp(y1,   K1),   K2); // x1 = y1 * 2^K1 * 2^K2
-                    auto x2 = ldexp(ldexp(y2, dMK1), dMK2); // x2 = y2 * 2^dMK1 * 2^dMK2
+                    T x1 = ldexp(ldexp(y1,   K1),   K2); // x1 = y1 * 2^K1 * 2^K2
+                    T x2 = ldexp(ldexp(y2, dMK1), dMK2); // x2 = y2 * 2^dMK1 * 2^dMK2
                     return std::minmax(x1, x2);
                 }
 
@@ -192,10 +192,10 @@ std::pair<T, T> solve(T a, T b, T c) {
                 if (samesign(a, c)) {
                     return NO_SOLUTIONS;
                 } else {
-                    auto MK = M + K;
-                    auto MK1 = keep_exponent_in_check<T>(MK);
-                    auto MK2 = MK - MK1;
-                    auto x1 = ldexp(ldexp(S, MK1), MK2);
+                    int MK = M + K;
+                    int MK1 = keep_exponent_in_check<T>(MK);
+                    int MK2 = MK - MK1;
+                    T x1 = ldexp(ldexp(S, MK1), MK2);
                     return std::pair(-x1, x1);
                 }
             }                    
