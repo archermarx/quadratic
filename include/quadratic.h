@@ -12,33 +12,30 @@ namespace quadratic
 //  Floating point constants and utility functions
 //====================================================
 template <typename T>
-const T NaN = std::numeric_limits<T>::quiet_NaN();
+constexpr T NaN = std::numeric_limits<T>::quiet_NaN();
 
 template <typename T>
-const T inf = std::numeric_limits<T>::infinity();
-
-template <typename T>
-const T eps = std::numeric_limits<T>::epsilon();
+constexpr T inf = std::numeric_limits<T>::infinity();
 
 // Maximum exponent
 template <typename T>
-const int E_MIN = std::numeric_limits<T>::min_exponent - 1;
+constexpr int E_MIN = std::numeric_limits<T>::min_exponent - 1;
 
 // Minimum exponent
 template <typename T>
-const int E_MAX = std::numeric_limits<T>::max_exponent - 1;
+constexpr int E_MAX = std::numeric_limits<T>::max_exponent - 1;
 
 // Number of bits in mantissa
 template <typename T>
-const int NUM_DIGITS = std::numeric_limits<T>::digits;
+constexpr int NUM_DIGITS = std::numeric_limits<T>::digits;
 
 // max val of Ea + Ea - 2 Eb to avoid overflow
 template<typename T>
-const int ECP_MAX = E_MAX<T> - 2 - NUM_DIGITS<T> / 2;
+constexpr int ECP_MAX = E_MAX<T> - 2 - NUM_DIGITS<T> / 2;
 
 // min val of Ea + Ea - 2 Eb to avoid underflow
 template<typename T>
-const int ECP_MIN = E_MIN<T> + 2 * NUM_DIGITS<T> - 4;
+constexpr int ECP_MIN = E_MIN<T> + 2 * NUM_DIGITS<T> - 4;
 
 // Utility functions
 template <typename T>
@@ -70,7 +67,15 @@ inline T kahan_discriminant_fma(T a, T b, T c) {
 template <typename T>
 std::pair<T, T> solve(T a, T b, T c) {
 
-    const std::pair<T,T> NO_SOLUTIONS = std::pair(NaN<T>, NaN<T>);
+    // Function only accepts floats
+    static_assert(
+        std::is_floating_point_v<T>, 
+        "Parameters a, b, and c must be float, double, long double, or other floating point type."
+    );
+
+    constexpr std::pair<T,T> NO_SOLUTIONS = std::pair(NaN<T>, NaN<T>);
+    constexpr T zero = T(0);
+    constexpr T one = T(1);
 
     // Invalid case: any of the parameters are nan or inf
     if (!std::isfinite(a) || !std::isfinite(b) || !std::isfinite(c)) {
@@ -88,7 +93,7 @@ std::pair<T, T> solve(T a, T b, T c) {
             if (c == 0) {
                 // If a and c are zero, but b is nonzero, then we have bx = 0, so only
                 // one real solution (i.e. x = 0) exists
-                return std::pair(T(0), NaN<T>);
+                return std::pair(zero, NaN<T>);
             } else {
                 // If a == 0 but b and c are nonzero, then we have bx + c = 0, which is
                 // a linear equation with solution x = -c / b
@@ -99,7 +104,7 @@ std::pair<T, T> solve(T a, T b, T c) {
         if (b == 0) {
             if (c == 0) {
                 // If a /= 0, but b and c == 0, then we have ax^2 = 0, implying x = 0;
-                return std::pair(T(0), NaN<T>);
+                return std::pair(zero, NaN<T>);
             } else {
                 // If a and c /= 0, but b == 0. then we have x^2 = -c/a, which has either no
                 // real solutions if sign(a) = sign(c), or two real solutions otherwise
@@ -126,7 +131,7 @@ std::pair<T, T> solve(T a, T b, T c) {
             }
         } else {
             if (c == 0) {
-                return std::minmax(T(0), -b / a);
+                return std::minmax(zero, -b / a);
             } else {
                 // a, b, and c all nonzero
 
@@ -147,7 +152,7 @@ std::pair<T, T> solve(T a, T b, T c) {
                     }
                     auto K1 = keep_exponent_in_check<T>(K);
                     auto K2 = K - K1;
-                    auto expval = ldexp(ldexp(1.0, K1), K2);
+                    auto expval = ldexp(ldexp(one, K1), K2);
 
                     if (delta > 0) {
                         auto B = std::fma(sqrt(delta), sgn(b), signif_b); //signif_b + sgn(b) * sqrt(delta);

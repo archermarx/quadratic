@@ -24,4 +24,4 @@ If there are no real solutions, then the pair will contain two NaNs. If there is
   auto [x1, x2] = quadratic::solve(a, b, c);
 ```
 
-When the equation has two solutions, the first solution will be the smaller of the two, i.e. `x1 < x2`.
+When the equation has two solutions, the first solution will be the smaller of the two, i.e. `x1 < x2`. The `solve` function is templated and should work with any floating point type.

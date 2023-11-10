@@ -11,6 +11,9 @@
 
 using namespace quadratic;
 
+template <typename T>
+constexpr T eps = std::numeric_limits<T>::epsilon();
+
 // Approximate equality of floating point numbers, including comparing if both are nan or inf.
 template <typename T>
 bool isapprox(T x, T y) {
