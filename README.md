@@ -52,4 +52,4 @@ When the equation has two solutions, the first solution will be the smaller of t
 
 ## Performance
 
-While I have done my best to optimize this library as best as I could, in my tests, this is typically about 2.4-2.7 times slower than a naive quadratic solver. I think more optimizations are certainly possible, and I welcome performance enhancement suggestions or PRs.
+While I have done my best to optimize this library, in my tests, this is typically about 2.4-2.7 times slower than a naive quadratic solver. I think more optimizations are certainly possible, and I welcome performance enhancement suggestions or PRs.
