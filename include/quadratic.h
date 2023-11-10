@@ -141,8 +141,9 @@ std::pair<T, T> solve(T a, T b, T c) {
                 auto signif_b = frexp(b, &exp_b);
                 auto signif_c = frexp(c, &exp_c);
                 
-                auto K = exp_b - exp_a;
-                auto ecp = exp_c + exp_a - 2 * exp_b;
+                int K = exp_b - exp_a;
+                // ecp = exp_c + exp_a - 2 exp_b
+                int ecp = exp_c + exp_a - (exp_b << 1);
 
                 if (ecp >= ECP_MIN<T> && ecp < ECP_MAX<T>) {
                     auto c2 = ldexp(signif_c, ecp);
@@ -150,8 +151,8 @@ std::pair<T, T> solve(T a, T b, T c) {
                     if (delta < 0) {
                         return NO_SOLUTIONS;
                     }
-                    auto K1 = keep_exponent_in_check<T>(K);
-                    auto K2 = K - K1;
+                    int K1 = keep_exponent_in_check<T>(K);
+                    int K2 = K - K1;
                     auto expval = ldexp(ldexp(one, K1), K2);
 
                     if (delta > 0) {
@@ -176,11 +177,11 @@ std::pair<T, T> solve(T a, T b, T c) {
                 if (ecp < ECP_MIN<T>) {
                     auto y1 = -signif_b / signif_a;
                     auto y2 = c3 / (signif_a * y1);
-                    auto dMK = dM + K;
-                    auto dMK1 = keep_exponent_in_check<T>(dMK);
-                    auto dMK2 = dMK - dMK1;
-                    auto K1 = keep_exponent_in_check<T>(K);
-                    auto K2 = K - K1;
+                    int dMK = dM + K;
+                    int dMK1 = keep_exponent_in_check<T>(dMK);
+                    int dMK2 = dMK - dMK1;
+                    int K1 = keep_exponent_in_check<T>(K);
+                    int K2 = K - K1;
 
                     auto x1 = ldexp(ldexp(y1,   K1),   K2); // x1 = y1 * 2^K1 * 2^K2
                     auto x2 = ldexp(ldexp(y2, dMK1), dMK2); // x2 = y2 * 2^dMK1 * 2^dMK2
