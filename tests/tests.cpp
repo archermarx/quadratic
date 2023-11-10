@@ -9,6 +9,8 @@
 #include <chrono>
 #include <iostream>
 
+using namespace quadratic;
+
 // Approximate equality of floating point numbers, including comparing if both are nan or inf.
 template <typename T>
 bool isapprox(T x, T y) {
@@ -53,7 +55,7 @@ class quadratic_test {
         quadratic_test(T _a, T _b, T _c) : a(_a), b(_b), c(_c), x1(NaN<T>), x2(NaN<T>) {}
 
         void validate() {
-            auto solution = solve_quadratic(a, b, c);
+            auto solution = solve(a, b, c);
             CHECK(isapprox(x1, solution.first));
             CHECK(isapprox(x2, solution.second));
             return;
@@ -263,7 +265,7 @@ std::vector<std::pair<T, T>> benchmark_quadratic(T a, T b, T c, int N) {
 
     for (int i = N; i < 2 * N; ++i) {
         auto test = tests[i - N];
-        results[i] = solve_quadratic(test.a, test.b, test.c);
+        results[i] = solve(test.a, test.b, test.c);
     }
     
     end = std::chrono::steady_clock::now();

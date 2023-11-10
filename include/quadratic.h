@@ -5,6 +5,9 @@
 #include <iostream>
 #include <algorithm>
 
+namespace quadratic
+{
+
 //====================================================
 //  Floating point constants and utility functions
 //====================================================
@@ -65,7 +68,7 @@ inline T kahan_discriminant_fma(T a, T b, T c) {
 
 // Algorithm based on "The Ins and Outs of Solving Quadratic Equations with Floating-Point Arithmetic (Goualard 2023)"
 template <typename T>
-std::pair<T, T> solve_quadratic(T a, T b, T c) {
+std::pair<T, T> solve(T a, T b, T c) {
 
     const std::pair<T,T> NO_SOLUTIONS = std::pair(NaN<T>, NaN<T>);
 
@@ -192,6 +195,8 @@ std::pair<T, T> solve_quadratic(T a, T b, T c) {
             }                    
         }
     }
+}
+
 }
 
 #endif
