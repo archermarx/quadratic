@@ -37,12 +37,7 @@ constexpr int ECP_MAX = E_MAX<T> - 2 - NUM_DIGITS<T> / 2;
 template<typename T>
 constexpr int ECP_MIN = E_MIN<T> + 2 * NUM_DIGITS<T> - 4;
 
-// Utility functions
-template <typename T>
-inline int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-}
-
+// Check if a and b share the same sign
 template <typename T>
 inline bool samesign(T a, T b) { return a * b > 0; }
 
@@ -54,7 +49,7 @@ inline bool samesign(T a, T b) { return a * b > 0; }
 template <typename T>
 inline int keep_exponent_in_check(int Kin) { return std::clamp(Kin, E_MIN<T>, E_MAX<T>); }
 
-// Accurate computation of the discriminant with Kahan's method, with an fma instruction
+// Accurate computation of the discriminant with Kahan's method, using fma instructions
 template <typename T>
 inline T kahan_discriminant_fma(T a, T b, T c) {
     T q = 4*a*c;
@@ -63,7 +58,15 @@ inline T kahan_discriminant_fma(T a, T b, T c) {
     return dq + dp;
 }
 
-// Algorithm based on "The Ins and Outs of Solving Quadratic Equations with Floating-Point Arithmetic (Goualard 2023)"
+/*
+*       quadratic::solve(T a, T b, T c) -> std::pair<T, T>
+*   Robustly solve quadratic equation a^2 + b^2 + c^2 = 0, avoiding undue overflow and overflow.
+*   Algorithm based on "The Ins and Outs of Solving Quadratic Equations with Floating-Point Arithmetic (Goualard 2023)".
+*   Returns a pair of type T, where T is some floating point type (i.e. float, double, long double).
+*   For equations with no real solutions, returns a pair of std::numeric_limits<T>.quiet_nan().
+*   For equations with one real solution, the solution is the first element of the pair, with the second element being a NaN.
+*   For those with two solutions, the results are presented in sorted order.
+*/
 template <typename T>
 std::pair<T, T> solve(T a, T b, T c) {
 
@@ -142,10 +145,9 @@ std::pair<T, T> solve(T a, T b, T c) {
                 T signif_c = frexp(c, &exp_c);
                 
                 int K = exp_b - exp_a;
-                // ecp = exp_c + exp_a - 2 exp_b
-                int ecp = exp_c + exp_a - (exp_b << 1);
+                int ecp = exp_c + exp_a - 2 * exp_b;
 
-                if (ecp >= ECP_MIN<T> && ecp < ECP_MAX<T>) {
+                if ((ecp >= ECP_MIN<T>) && (ecp < ECP_MAX<T>)) {
                     T c2 = ldexp(signif_c, ecp);
                     T delta = kahan_discriminant_fma(signif_a, signif_b, c2);
                     if (delta < 0) {
@@ -171,7 +173,7 @@ std::pair<T, T> solve(T a, T b, T c) {
                 int dM = ecp & ~1;              // dM = floor(ecp/2) * 2
                 int M = dM >> 1;                // M = dM / 2
                 int E = ecp & 1;                // E = odd(ecp) ? 1 : 0
-                T c3 = ldexp(signif_c, E);   // c3 = signif_c * 2^E
+                T c3 = ldexp(signif_c, E);      // c3 = signif_c * 2^E
                 T S = sqrt(abs(c3 / signif_a));
 
                 if (ecp < ECP_MIN<T>) {

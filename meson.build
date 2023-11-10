@@ -15,6 +15,7 @@ project_test_files = [
 ]
 
 build_args = [
+  '-Wconversion', '-Wsign-conversion'
 ]
 
 

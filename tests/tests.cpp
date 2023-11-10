@@ -18,7 +18,7 @@ constexpr T eps = std::numeric_limits<T>::epsilon();
 template <typename T>
 bool isapprox(T x, T y) {
     return  (std::isnan(x) && std::isnan(y)) ||
-            (std::isinf(x) && std::isinf(y) && sgn(x) == sgn(y)) ||
+            (std::isinf(x) && std::isinf(y) && samesign(x, y)) ||
             std::abs(x - y) <= std::sqrt(eps<T>) * std::max(abs(x), abs(y));
 }
 
