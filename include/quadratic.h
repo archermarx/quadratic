@@ -156,7 +156,7 @@ std::pair<T, T> solve(T a, T b, T c) {
                     T expval = ldexp(ldexp(one, K1), K2);
 
                     if (delta > 0) {
-                        T B = std::fma(sqrt(delta), sgn(b), signif_b); //signif_b + sgn(b) * sqrt(delta);
+                        T B = signif_b + copysign(sqrt(delta), b);
                         T y1 = -(2 * c2) / B;
                         T y2 = -B / (2 * signif_a);
                         T x1 = y1 * expval;
