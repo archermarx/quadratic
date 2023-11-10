@@ -1,6 +1,11 @@
-steps:
-- uses: actions/checkout@v2
-- uses: actions/setup-python@v1
-- uses: BSFishy/meson-build@v1.0.3
-  with:
-    action: test
+name: Test
+on: [push]
+jobs:
+  run_tests:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+      - uses: BSFishy/meson-build@v1.0.3
+        with:
+          action: test
