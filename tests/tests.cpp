@@ -58,9 +58,15 @@ class quadratic_test {
         quadratic_test(T _a, T _b, T _c) : a(_a), b(_b), c(_c), x1(NaN<T>), x2(NaN<T>) {}
 
         void validate() {
-            auto solution = solve(a, b, c);
-            CHECK(isapprox(x1, solution.first));
-            CHECK(isapprox(x2, solution.second));
+            auto [_x1, _x2] = solve(a, b, c);
+            CHECK(isapprox(x1, _x1));
+            CHECK(isapprox(x2, _x2));
+
+            if (!isapprox(x1, _x1) || !isapprox(x2, _x2)){
+                std::cout << "Quadratic a = " << a << ", b = " << b << ", c = " << c << ": " << std::endl;
+                std::cout << "Expected solution: " << x1 << ", " << x2 << std::endl;
+                std::cout << "Computed solution: " << _x1 << ", " << _x2 << std::endl;
+            }
             return;
         }   
 };
@@ -212,6 +218,41 @@ TEST_CASE("two solutions") {
     };
 
     for (auto &test : tests) {
+        test.validate();
+    }
+}
+
+TEST_CASE("readme") {
+    std::vector<quadratic_test<float>> testsf{
+        quadratic_test<float>(1.0f, 0.0f, -1.0f, -1.0f, 1.0f),
+        quadratic_test<float>(1.0f, 0.0f, 1.0f),
+        quadratic_test<float>(1.0f, 2.0f, 1.0f, -1.0f),
+        quadratic_test<float>(1.0f, -1.0f, -6.0f, -2.0f, 3.0f)
+    };
+
+    for (auto &test : testsf) {
+        test.validate();
+    }
+    
+    std::vector<quadratic_test<double>> testsd{
+        quadratic_test<double>(1.0, 0.0, -1.0, -1.0, 1.0),
+        quadratic_test<double>(1.0, 0.0, 1.0),
+        quadratic_test<double>(1.0, 2.0, 1.0, -1.0),
+        quadratic_test<double>(1.0, -1.0, -6.0, -2.0, 3.0)
+    };
+
+    for (auto &test : testsd) {
+        test.validate();
+    }
+
+    std::vector<quadratic_test<long double>> testsl{
+        quadratic_test<long double>(1.0l, 0.0l, -1.0l, -1.0l, 1.0l),
+        quadratic_test<long double>(1.0l, 0.0l, 1.0l),
+        quadratic_test<long double>(1.0l, 2.0l, 1.0l, -1.0l),
+        quadratic_test<long double>(1.0l, -1.0l, -6.0l, -2.0l, 3.0l)
+    };
+
+    for (auto &test : testsl) {
         test.validate();
     }
 }

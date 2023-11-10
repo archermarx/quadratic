@@ -14,17 +14,41 @@ Download the [header file](https://github.com/archermarx/quadratic/include/heade
 
 ## Usage
 
-To solve a quadratic equation with parameters `a`, `b`, and `c`, call the `solve` function in the `quadratic` namespace. This function returns a ```std::pair<T, T>```, where `T` is the input type.
-If there are no real solutions, then the pair will contain two NaNs. If there is only one solution, then it will be contained in the first element, while the second element of the pair will be NaN. 
+To solve a quadratic equation with parameters `a`, `b`, and `c`, call the `solve` function in the `quadratic` namespace.This function returns a ```std::pair<T, T>```, where `T` is the input type. `T` can be any floating point type.
+
+```cpp
+  float a = 1.0f;
+  float b = 0.0f;
+  float c = -1.0f;
+  auto [x1, x2] = quadratic::solve(a, b, c); // [-1, 1]
+```
+
+If there are no real solutions, then the pair will contain two NaNs. 
+
+```cpp
+  long double a = 1.0;
+  long double b = 0.0;
+  long double c = 1.0;
+  auto [x1, x2] = quadratic::solve(a, b, c); // [nan, nan]
+```
+
+If there is only one solution, it will be contained in the first element of the returned pair, while the second element of the pair will be a NaN. 
 
 ```cpp
   double a = 1.0;
-  double b = 1.0;
+  double b = 2.0;
   double c = 1.0;
-  auto [x1, x2] = quadratic::solve(a, b, c);
+  auto [x1, x2] = quadratic::solve(a, b, c);  // [-1, nan]
 ```
-Robust C++ quadratic equation solver. 
-When the equation has two solutions, the first solution will be the smaller of the two, i.e. `x1 < x2`. The `solve` function is templated and should work with any floating point type.
+
+When the equation has two solutions, the first solution will be the smaller of the two, i.e. `x1 < x2`. 
+
+```cpp
+  double a = 1.0;
+  double b = -1.0;
+  double c = 6.0;
+  auto [x1, x2] = quadratic::solve(a, b, c) // [-2, 3]
+```
 
 ## Performance
 
