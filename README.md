@@ -10,7 +10,7 @@ Original Julia implementation at https://github.com/goualard-f/QuadraticEquation
 
 ## Installation
 
-Download the [header file](https://github.com/archermarx/quadratic/include/header.h) and compile with your project using your preferred build system. Then, simply `#include "quadratic.h"`
+Download the [header file](https://github.com/archermarx/quadratic/include/header.h) Then, simply `#include "quadratic.h"` and compile using your preferred build system. 
 
 ## Usage
 
